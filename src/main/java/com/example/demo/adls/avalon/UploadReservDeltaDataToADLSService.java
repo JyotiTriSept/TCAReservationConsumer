@@ -1,4 +1,4 @@
-package com.example.demo.adls;
+package com.example.demo.adls.avalon;
 
 import java.time.ZonedDateTime;
 import java.util.concurrent.Future;
@@ -26,24 +26,30 @@ import com.azure.storage.file.datalake.models.PathHttpHeaders;
 import com.azure.storage.file.datalake.models.PathInfo;
 
 @Component
-public class UploadReservDataToADLSService {
+public class UploadReservDeltaDataToADLSService {
 	
 	@Async("consumerAsyncExecutor")
-	public Future<Void> uploadReservDataToADLSStorage(String data) {
+	public Future<Void> uploadReservDeltaDataToADLSStorage(String data) {
 		
 		System.out.println("Invoking an asynchronous method. " 
 				+ Thread.currentThread().getName());
 		DataLakeServiceClient getDataLakeServiceClient = GetDataLakeServiceClient("wohalgpmsdldevsa", "iSh4zGYXanmJdEhCSv/Qg1h+GF37rsfZAwIzzo0nByAgg6itXlDVQHFVe2gf5vK+3l4eFvtPWaVNj2P4f0wQow==");
 
 		DataLakeFileSystemClient fileSystemClient = getDataLakeServiceClient
-				.getFileSystemClient("woh-alg-pms-datalake-dev");
+				.getFileSystemClient("woh-alg-pms-datalake-avalon");
 
 		ZonedDateTime currentTime = ZonedDateTime.now();
-		DataLakeDirectoryClient directoryClient = fileSystemClient.getDirectoryClient("RAW").getSubdirectoryClient("TCA-API").getSubdirectoryClient("Reservations")
+		DataLakeDirectoryClient directoryClient = fileSystemClient.createDirectoryIfNotExists("Avalon-Raw")
+				.createSubdirectoryIfNotExists("Avalon-API")
+				.createSubdirectoryIfNotExists("Reservations")
+				.createSubdirectoryIfNotExists("ReservationsDelta");
+		
+		        DataLakeDirectoryClient finalDirectoryClient = directoryClient
 				.createSubdirectoryIfNotExists(String.valueOf(currentTime.getYear()))
 				.createSubdirectoryIfNotExists(String.valueOf(currentTime.getMonthValue()))
 				.createSubdirectoryIfNotExists(String.valueOf(currentTime.getDayOfMonth()));
-
+		        
+		        
 
 		String timeStamp= String.valueOf(currentTime.getYear())+"-"
                 +String.valueOf(currentTime.getMonthValue())+"-"
@@ -55,21 +61,18 @@ public class UploadReservDataToADLSService {
 		try {
 			
 			JSONObject jsonObject = (JSONObject) new JSONParser().parse(data);
-			String reservationData = (String) jsonObject.get("ReservationData");
-			String fileName = (String) jsonObject.get("group_code") + "_" + (String) jsonObject.get("brand_code") + "_"
-					+ (String) jsonObject.get("hotel_code") + "_Reservations_" + timeStamp + ".json";
-			DataLakeFileClient fileClient = directoryClient.createFile(fileName);
-			String trimmedString = reservationData.trim();
+			String reservationDelataData = (String) jsonObject.get("RservationDeltaInfo");
+			String fileName = (String) jsonObject.get("hotel") + "_ReservationsDelta_Flat" +".json";
+			String archiveFileName = (String) jsonObject.get("hotel") + "_ReservationsDelta_" + timeStamp + ".json";
+			DataLakeFileClient fileClient = directoryClient.createFile(fileName, true);
+			DataLakeFileClient archiveFileClient = finalDirectoryClient.createFile(archiveFileName);
+			String trimmedString = reservationDelataData.trim();
 			//fileClient.append(BinaryData.fromString(trimmedString), 0);
 			fileClient.upload(BinaryData.fromString(trimmedString), true);
+			archiveFileClient.upload(BinaryData.fromString(trimmedString), true);
 			System.out.printf(Thread.currentThread().getName()+"Flush of reservation data completed on path: %s%n", fileClient.getFilePath());
 			
-			//boolean writeToDataLakeBlobStorageWithResponse = writeToDataLakeBlobStorageWithResponse(trimmedString.length(),fileClient);
 			
-			 if(reservationData != null && !reservationData.isBlank()) {
-				 
-				 uploadToConfirmedReservations(trimmedString,fileName, currentTime);
-			 }
 		}catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -77,6 +80,7 @@ public class UploadReservDataToADLSService {
 		return new AsyncResult<Void>(null);
 	}
 	
+
 	static public DataLakeServiceClient GetDataLakeServiceClient(String accountName, String accountKey){
 
 	    StorageSharedKeyCredential sharedKeyCredential =
@@ -113,19 +117,5 @@ public class UploadReservDataToADLSService {
 		 }
 	}
 	
-	private static void uploadToConfirmedReservations(String trimmedString,String fileName, ZonedDateTime currentTime) {
-		DataLakeServiceClient getDataLakeServiceClient = GetDataLakeServiceClient("wohalgpmsdldevsa", "iSh4zGYXanmJdEhCSv/Qg1h+GF37rsfZAwIzzo0nByAgg6itXlDVQHFVe2gf5vK+3l4eFvtPWaVNj2P4f0wQow==");
-
-		DataLakeFileSystemClient fileSystemClient = getDataLakeServiceClient
-				.getFileSystemClient("woh-alg-pms-datalake-dev");
-		
-		//
-		DataLakeDirectoryClient subdirectoryClient = fileSystemClient.getDirectoryClient("RAW").getSubdirectoryClient("TCA-API").getSubdirectoryClient("Reservations").getSubdirectoryClient("ConfirmedReservations");
-		DataLakeFileClient fileClient1 = subdirectoryClient.createFile(fileName);
-		//fileClient1.append(BinaryData.fromString(trimmedString), 0);
-		fileClient1.upload(BinaryData.fromString(trimmedString), true);
-		//writeToDataLakeBlobStorageWithResponse(trimmedString.length(),fileClient1);
-		
-		System.out.printf(Thread.currentThread().getName()+"Flush of reservation data completed on path: %s%n ", fileClient1.getFilePath());
-	}
+	
 }

@@ -8,10 +8,10 @@
 		<version>2.7.11</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>ConsumerReservationDataEHTest</groupId>
-	<artifactId>ConsumerReservationDataEH</artifactId>
+	<groupId>ConsumerReservationData</groupId>
+	<artifactId>ConsumerReservationData</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ConsumerReservationDataEH</name>
+	<name>ConsumerReservationData</name>
 	<description>Demo project for Spring Boot for Reservation Event Hub</description>
 	<properties>
 		<java.version>11</java.version>

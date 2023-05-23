@@ -27,4 +27,9 @@ public class ReservationCodeModel {
 		this.external_code = external_code;
 	}
 
+	@Override
+	public String toString() {
+		return "ReservationCodeModel [pms_code=" + pms_code + ", external_code=" + external_code + "]";
+	}
+
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -41,9 +42,16 @@ public class TCAConfirmReservationServiceImplementation {
 				jsonObject = (JSONObject) new JSONParser().parse(data);
 
 				// to get pms_code from reservation data
-				String reservationDatList = (String) jsonObject.get(RESERVATIONDATA);
+				String reservationDataListString = (String) jsonObject.get(RESERVATIONDATA);
+				JSONArray  reservationDataList= (JSONArray) new JSONParser().parse(reservationDataListString);
 				List<ReservationCodeModel> reservation_codes = new ArrayList<ReservationCodeModel>();
-				List<String> collect = reservationDatList.lines().collect(Collectors.toList());
+				for(int i=0; i< reservationDataList.size();i++) {
+					JSONObject parsedJSONObj = (JSONObject) reservationDataList.get(i);
+					ReservationCodeModel resCode = new ReservationCodeModel((String) parsedJSONObj.get("pms_code"),
+							(String) parsedJSONObj.get("pms_code"));
+					reservation_codes.add(resCode);
+				}
+				/*List<String> collect = reservationDataList.lines().collect(Collectors.toList());
 				collect.forEach(r -> {
 					JSONObject parsedJSONObj;
 					try {
@@ -55,7 +63,7 @@ public class TCAConfirmReservationServiceImplementation {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				});
+				});*/
 
 				ConfirmReservationModel confrimReq = new ConfirmReservationModel((String) jsonObject.get(GROUPCODE),
 						(String) jsonObject.get(BRANDCODE), (String) jsonObject.get(HOTELCODE));
@@ -63,18 +71,18 @@ public class TCAConfirmReservationServiceImplementation {
 				fileName = "AMR"+"_"+(String) jsonObject.get(BRANDCODE)+"_"+(String) jsonObject.get(HOTELCODE);
 				// api req
 				 /* ResponseEntity<String> responseEntity = webClient.post()
-				                                          .uri(keyVaultObject.getConfirmReservationEndpoint()) 
+				                                          .uri("/ISL/ConfirmReservations") 
 				                                          .header("Authorization", "Bearer " +accessToken) .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
 				                                          .contentType(MediaType.APPLICATION_JSON) .bodyValue(confrimReq) .retrieve()
 				                                          .onStatus(status -> (status.value() == 204 || status.value() == 500),clientResponse -> Mono.empty()) 
 				                                          .toEntity(String.class)
 				                                          .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)).doAfterRetry(retrySignal -> {
-								                                System.out.println("Retried TCA Login API: " + retrySignal.totalRetries());
+								                                System.out.println("Retried TCA Confirm Reservartions API: " + retrySignal.totalRetries());
 							                                  }))
-				                                          .block();
+				                                          .block();*/
 				  
-				  if(responseEntity.getStatusCodeValue() == 200) {
-				  System.out.println("Reservations Confirmed!!"); 
+				System.out.println("Reservations Confirmed!!"); 
+				/*  if(responseEntity.getStatusCodeValue() == 200) {
 				  } 
 				  else {
 				  System.out.print("Reservations confirmation failed"); 
