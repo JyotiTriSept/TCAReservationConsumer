@@ -41,11 +41,11 @@ public class ConfirmReservationModel {
 	public void setReservation_codes(List<ReservationCodeModel> reservation_codes) {
 		this.reservation_codes = reservation_codes;
 	}
-	@Override
+	/*@Override
 	public String toString() {
 		return "ConfirmReservationModel [group_code=" + group_code + ", brand_code=" + brand_code + ", hotel_code="
 				+ hotel_code + ", reservation_codes=" + reservation_codes + "]";
-	}
+	}*/
 	
 	
 

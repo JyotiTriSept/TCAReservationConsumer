@@ -2,9 +2,7 @@ package com.example.demo.confromreservations;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -29,7 +27,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 @Component
-public class TCAConfirmReservationServiceImplementation {
+public class TCAConfirmReservationServiceImplementationDuplicate {
 	private static final String GROUPCODE ="group_code";
 	private static final String BRANDCODE ="brand_code";
 	private static final String HOTELCODE ="hotel_code";
@@ -46,34 +44,31 @@ public class TCAConfirmReservationServiceImplementation {
 				// to get pms_code from reservation data
 				String reservationDataListString = (String) jsonObject.get(RESERVATIONDATA);
 				JSONArray  reservationDataList= (JSONArray) new JSONParser().parse(reservationDataListString);
-				//List<ReservationCodeModel> reservation_codes = new ArrayList<ReservationCodeModel>();
-				JSONArray  reservation_codes = new JSONArray();
-				System.out.println("No of reservations for Hotel: "+(String) jsonObject.get(HOTELCODE)+"is: "+reservationDataList.size());
-				
+				List<ReservationCodeModel> reservation_codes = new ArrayList<ReservationCodeModel>();
 				//for(int i=0; i< reservationDataList.size();i++) {
-					for(int i=0; i<2;i++) {
+					for(int i=0; i<1;i++) {
 					JSONObject parsedJSONObj = (JSONObject) reservationDataList.get(i);
-					
-					Map<String, String> resCodeMapData = new HashMap<String, String>();
-					resCodeMapData.put("pms_code", (String) parsedJSONObj.get("pms_code"));
-					resCodeMapData.put("external_code", (String) parsedJSONObj.get("pms_code"));
-					
-					JSONObject reservationCodeJsonObject = new JSONObject();
-					reservationCodeJsonObject.putAll( resCodeMapData );
-					reservation_codes.add(reservationCodeJsonObject);
+					ReservationCodeModel resCode = new ReservationCodeModel((String) parsedJSONObj.get("pms_code"),
+							(String) parsedJSONObj.get("pms_code"));
+					reservation_codes.add(resCode);
 				}
-				
-					JSONObject confirmReq = new JSONObject();
-				    confirmReq.put("hotel_code", (String) jsonObject.get(HOTELCODE));
-				    confirmReq.put("group_code", (String) jsonObject.get(GROUPCODE));
-				    confirmReq.put("brand_code", (String) jsonObject.get(BRANDCODE));
-				    confirmReq.put("reservation_codes", reservation_codes);
+				/*List<String> collect = reservationDataList.lines().collect(Collectors.toList());
+				collect.forEach(r -> {
+					JSONObject parsedJSONObj;
+					try {
+						parsedJSONObj = (JSONObject) new JSONParser().parse(r);
+						ReservationCodeModel resCode = new ReservationCodeModel((String) parsedJSONObj.get("pms_code"),
+								(String) parsedJSONObj.get("pms_code"));
+						reservation_codes.add(resCode);
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				});*/
 
-				    System.out.println(confirmReq.toJSONString());
-				/*ConfirmReservationModel confirmReq = new ConfirmReservationModel((String) jsonObject.get(GROUPCODE),
+				ConfirmReservationModel confirmReq = new ConfirmReservationModel((String) jsonObject.get(GROUPCODE),
 						(String) jsonObject.get(BRANDCODE), (String) jsonObject.get(HOTELCODE));
-				confirmReq.setReservation_codes(reservation_codes);*/
-				    
+				confirmReq.setReservation_codes(reservation_codes);
 				fileName = "AMR"+"_"+(String) jsonObject.get(BRANDCODE)+"_"+(String) jsonObject.get(HOTELCODE);
 				// api req
 				  ResponseEntity<String> responseEntity = webClient.post()
@@ -92,7 +87,6 @@ public class TCAConfirmReservationServiceImplementation {
 				  
 				//System.out.println("Reservations Confirmed!!"); 
 				  if(responseEntity.getStatusCodeValue() == 200) {
-					  System.out.println("Reservations Confirmed!!");
 				  } 
 				  else {
 				  System.out.print("Reservations confirmation failed"); 
@@ -106,8 +100,8 @@ public class TCAConfirmReservationServiceImplementation {
 				System.out.println(e.getCause());
 				String storedMessage = "Error Message: " + e.getMessage() + "Cause: " + e.getCause() + "Message: "
 						+ e.getLocalizedMessage();
-				StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementation.fileName);
-				StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementation.fileName);
+				StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementationDuplicate.fileName);
+				StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementationDuplicate.fileName);
 				return new AsyncResult<Void>(null);
 			}catch (Exception e) {
 				if (e.getCause() instanceof WebClientResponseException) {
@@ -118,8 +112,8 @@ public class TCAConfirmReservationServiceImplementation {
 					System.out.println(cause.getMessage());
 					String storedMessage = "Error Message: " + cause.getMessage() + "Specific Cause: "
 							+ cause.getMostSpecificCause() + "Response Body: " + cause.getResponseBodyAsString();
-					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementation.fileName);
-					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementation.fileName);
+					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementationDuplicate.fileName);
+					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementationDuplicate.fileName);
 					return new AsyncResult<Void>(null);
 					
 				} else if (e.getCause() instanceof WebClientRequestException) {
@@ -130,8 +124,8 @@ public class TCAConfirmReservationServiceImplementation {
 					
 					String storedMessage = "Error Message: " + cause.getMessage() + "Specific Cause: "
 							+ cause.getMostSpecificCause() + "Root Cause: " + cause.getRootCause();
-					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementation.fileName);
-					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementation.fileName);
+					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementationDuplicate.fileName);
+					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementationDuplicate.fileName);
 					return new AsyncResult<Void>(null);
 
 				} else {
@@ -141,8 +135,8 @@ public class TCAConfirmReservationServiceImplementation {
 					System.out.println(e.getCause());
 					String storedMessage = "Error Message: " + e.getMessage() + "Cause: " + e.getCause() + "Message: "
 							+ e.getLocalizedMessage();
-					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementation.fileName);
-					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementation.fileName);
+					StoreReservExceptionToBlob.updateToLatestFolder(storedMessage, "Reservations",TCAConfirmReservationServiceImplementationDuplicate.fileName);
+					StoreReservExceptionToBlob.storingExceptionInArchiveLocation(storedMessage,"Reservations", TCAConfirmReservationServiceImplementationDuplicate.fileName);
 					return new AsyncResult<Void>(null);
 				}
 
